@@ -13,13 +13,40 @@ export type UiFormat = {
   fps: number | null;
 };
 
+export type MuxOption = {
+  id: string;
+  label: string;
+  resolution: string;
+  height: number | null;
+  filesize: number | null;
+  videoUrl: string;
+  audioUrl: string;
+  vcodec: string | null;
+  acodec: string | null;
+  ext: "mp4" | "mkv";
+};
+
+export type GalleryItem = {
+  url: string;
+  thumbnail?: string;
+  filename: string;
+  width?: number;
+  height?: number;
+  ext: string;
+};
+
+export type ResultKind = "media" | "image" | "gallery";
+
 export type ExtractResult = {
+  kind: ResultKind;
   title: string;
   thumbnail: string | null;
   duration: number | null;
   webpage_url: string;
   extractor: string;
   formats: UiFormat[];
+  muxOptions?: MuxOption[];
+  gallery?: GalleryItem[];
 };
 
 export function humanSize(bytes: number | null | undefined): string {

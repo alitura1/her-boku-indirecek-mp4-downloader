@@ -156,6 +156,7 @@ export async function pipedExtract(
     return {
       instance: base,
       result: {
+        kind: "media",
         title: data.title ?? "İsimsiz",
         thumbnail: data.thumbnailUrl ?? null,
         duration: data.duration ?? null,

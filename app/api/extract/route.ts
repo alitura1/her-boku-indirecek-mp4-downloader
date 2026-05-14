@@ -6,6 +6,8 @@ import { randomUUID } from "node:crypto";
 import { create as createYtDlp } from "youtube-dl-exec";
 import { normalizeFormats, type ExtractResult } from "@/lib/formats";
 import { extractYoutubeId, isYoutubeUrl, pipedExtract } from "@/lib/piped";
+import { buildMuxOptions } from "@/lib/mux";
+import { detectGalleryFromYtdlp, looksLikeImageUrl, tryDirectImage } from "@/lib/image";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,13 +52,29 @@ function shortErr(e: any): string {
 }
 
 function toResult(info: any, fallbackUrl: string): ExtractResult {
+  const formats = normalizeFormats(info.formats ?? []);
+  const gallery = detectGalleryFromYtdlp(info);
+  if (gallery && gallery.length > 0 && formats.length === 0) {
+    return {
+      kind: gallery.length === 1 ? "image" : "gallery",
+      title: info.title ?? gallery[0].filename ?? "İsimsiz",
+      thumbnail: info.thumbnail ?? gallery[0].thumbnail ?? null,
+      duration: null,
+      webpage_url: info.webpage_url ?? fallbackUrl,
+      extractor: info.extractor ?? "yt-dlp",
+      formats: [],
+      gallery,
+    };
+  }
   return {
+    kind: "media",
     title: info.title ?? "İsimsiz",
     thumbnail: info.thumbnail ?? null,
     duration: info.duration ?? null,
     webpage_url: info.webpage_url ?? fallbackUrl,
     extractor: info.extractor ?? "unknown",
-    formats: normalizeFormats(info.formats ?? []),
+    formats,
+    muxOptions: buildMuxOptions(formats),
   };
 }
 
@@ -93,6 +111,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    if (looksLikeImageUrl(url)) {
+      const img = await tryDirectImage(url);
+      if (img) return NextResponse.json(img);
+    }
+
     const isYT = isYoutubeUrl(url);
 
     if (isYT) {
@@ -123,6 +146,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({
               ...piped.result,
               extractor: `youtube (via piped: ${piped.instance.replace(/^https?:\/\//, "")})`,
+              muxOptions: buildMuxOptions(piped.result.formats),
             });
           }
           attempts.push({ strategy: "piped", error: piped.error });

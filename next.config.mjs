@@ -9,7 +9,9 @@ const nextConfig = {
   outputFileTracingRoot: __dirname,
   outputFileTracingIncludes: {
     "/api/extract": ["./bin/**/*"],
+    "/api/merge": ["./node_modules/ffmpeg-static/ffmpeg*"],
   },
+  serverExternalPackages: ["ffmpeg-static", "youtube-dl-exec", "archiver"],
 };
 
 export default nextConfig;

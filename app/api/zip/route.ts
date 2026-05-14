@@ -34,8 +34,9 @@ export async function POST(req: NextRequest) {
   }
   const zipName = sanitize(body.filename ?? "gallery.zip", "gallery.zip");
 
-  const { ZipArchive } = await import("archiver");
-  const archive: any = new (ZipArchive as any)({ store: true });
+  const mod: any = await import("archiver");
+  const ZipArchive = mod.ZipArchive ?? mod.default;
+  const archive: any = new ZipArchive({ store: true });
   archive.on("warning", () => {});
   archive.on("error", () => {});
 

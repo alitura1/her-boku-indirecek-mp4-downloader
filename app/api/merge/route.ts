@@ -5,6 +5,7 @@ import path from "node:path";
 import os from "node:os";
 import ffmpegStatic from "ffmpeg-static";
 import { create as createYtDlp } from "youtube-dl-exec";
+import { contentDispositionAttachment } from "@/lib/http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -321,7 +322,7 @@ export async function POST(req: NextRequest) {
     return new Response(stream, {
       headers: {
         "content-type": container === "mkv" ? "video/x-matroska" : "video/mp4",
-        "content-disposition": `attachment; filename="${filename}"`,
+        "content-disposition": contentDispositionAttachment(filename),
         "cache-control": "no-store",
       },
     });

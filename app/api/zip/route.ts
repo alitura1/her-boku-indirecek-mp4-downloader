@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { Readable } from "node:stream";
+import { contentDispositionAttachment } from "@/lib/http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
   return new Response(stream, {
     headers: {
       "content-type": "application/zip",
-      "content-disposition": `attachment; filename="${zipName}"`,
+      "content-disposition": contentDispositionAttachment(zipName),
       "cache-control": "no-store",
     },
   });

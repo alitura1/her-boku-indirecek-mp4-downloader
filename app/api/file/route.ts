@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { contentDispositionAttachment } from "@/lib/http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
   if (ct) headers.set("content-type", ct);
   const len = upstream.headers.get("content-length");
   if (len) headers.set("content-length", len);
-  headers.set("content-disposition", `attachment; filename="${filename}"`);
+  headers.set("content-disposition", contentDispositionAttachment(filename));
   headers.set("cache-control", "no-store");
   return new Response(upstream.body, { headers });
 }

@@ -16,6 +16,12 @@ export default function Home() {
   const [data, setData] = useState<ExtractResult | null>(null);
   const [tab, setTab] = useState<Tab>("mux");
   const [muxing, setMuxing] = useState<string | null>(null);
+  const [mergeError, setMergeError] = useState<{
+    msg: string;
+    stderr?: string;
+    hint?: string;
+    code?: number | null;
+  } | null>(null);
   const [zipping, setZipping] = useState(false);
 
   async function analyze(e: React.FormEvent) {
@@ -58,6 +64,7 @@ export default function Home() {
   async function downloadMuxed(opt: MuxOption) {
     if (!data) return;
     setMuxing(opt.id);
+    setMergeError(null);
     try {
       const safeTitle = (data.title || "video").replace(/[/\\?%*:|"<>]/g, "_").slice(0, 100);
       const filename = `${safeTitle}-${opt.resolution}.${opt.ext}`;
@@ -72,8 +79,14 @@ export default function Home() {
         }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j.error || `HTTP ${res.status}`);
+        const j = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        setMergeError({
+          msg: j.error || `HTTP ${res.status}`,
+          stderr: j.stderr,
+          hint: j.hint,
+          code: j.code,
+        });
+        return;
       }
       const blob = await res.blob();
       const a = document.createElement("a");
@@ -84,7 +97,7 @@ export default function Home() {
       a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
     } catch (e: any) {
-      alert("Birleştirme başarısız: " + String(e?.message ?? e));
+      setMergeError({ msg: "Network/Browser hatası: " + String(e?.message ?? e) });
     } finally {
       setMuxing(null);
     }
@@ -286,6 +299,27 @@ export default function Home() {
               </button>
             ))}
           </div>
+
+          {tab === "mux" && mergeError && (
+            <div className="border border-red-500/40 bg-red-500/10 text-red-200 rounded-lg p-4 mb-4">
+              <div className="font-semibold mb-1">Birleştirme başarısız</div>
+              <div className="text-sm">{mergeError.msg}</div>
+              {mergeError.code !== undefined && mergeError.code !== null && (
+                <div className="text-xs text-white/50 mt-1">ffmpeg exit code: {mergeError.code}</div>
+              )}
+              {mergeError.hint && <div className="text-xs text-white/70 mt-2">{mergeError.hint}</div>}
+              {mergeError.stderr && (
+                <details className="mt-3">
+                  <summary className="text-xs text-white/50 cursor-pointer select-none hover:text-white/70">
+                    ffmpeg stderr
+                  </summary>
+                  <pre className="mt-2 text-xs font-mono text-white/60 whitespace-pre-wrap break-all max-h-64 overflow-y-auto">
+                    {mergeError.stderr}
+                  </pre>
+                </details>
+              )}
+            </div>
+          )}
 
           {tab === "mux" ? (
             muxOptions.length === 0 ? (

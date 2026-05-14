@@ -11,6 +11,14 @@ function isMp4Compatible(vcodec: string | null): boolean {
   return /^(avc1|h264|hev1|hvc1|av01)/i.test(vcodec);
 }
 
+function vcodecPriority(vcodec: string | null): number {
+  if (!vcodec) return 99;
+  if (/^(avc1|h264)/i.test(vcodec)) return 0;
+  if (/^(hev1|hvc1)/i.test(vcodec)) return 1;
+  if (/^av01/i.test(vcodec)) return 2;
+  return 50;
+}
+
 function audioIsAacLike(acodec: string | null): boolean {
   if (!acodec) return false;
   return /(mp4a|aac)/i.test(acodec);
@@ -41,10 +49,10 @@ export function buildMuxOptions(formats: UiFormat[]): MuxOption[] {
       byHeight.set(h, v);
       continue;
     }
-    const existingMp4 = isMp4Compatible(existing.vcodec);
-    const candMp4 = isMp4Compatible(v.vcodec);
-    if (candMp4 && !existingMp4) byHeight.set(h, v);
-    else if (candMp4 === existingMp4) {
+    const existingPrio = vcodecPriority(existing.vcodec);
+    const candPrio = vcodecPriority(v.vcodec);
+    if (candPrio < existingPrio) byHeight.set(h, v);
+    else if (candPrio === existingPrio) {
       const ev = existing.vbr ?? existing.filesize ?? 0;
       const cv = v.vbr ?? v.filesize ?? 0;
       if (cv > ev) byHeight.set(h, v);

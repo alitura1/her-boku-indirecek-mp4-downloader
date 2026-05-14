@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "fetch-ytdlp": "node scripts/fetch-ytdlp.mjs",
+    "build": "node scripts/fetch-ytdlp.mjs && next build",
     "start": "next start",
     "lint": "next lint"
   },

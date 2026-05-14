@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import youtubedl from "youtube-dl-exec";
+import path from "node:path";
+import { create as createYtDlp } from "youtube-dl-exec";
 import { normalizeFormats, type ExtractResult } from "@/lib/formats";
+
+const BIN_NAME = process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp";
+const binPath =
+  process.env.YOUTUBE_DL_PATH ??
+  path.join(process.cwd(), "bin", BIN_NAME);
+
+const youtubedl = createYtDlp(binPath);
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

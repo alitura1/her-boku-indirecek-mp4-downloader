@@ -8,7 +8,7 @@ const nextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: __dirname,
   outputFileTracingIncludes: {
-    "/api/extract": ["./node_modules/youtube-dl-exec/bin/**/*"],
+    "/api/extract": ["./bin/**/*"],
   },
 };
 

@@ -21,9 +21,12 @@ export type MuxOption = {
   filesize: number | null;
   videoUrl: string;
   audioUrl: string;
+  videoFormatId: string;
+  audioFormatId: string;
   vcodec: string | null;
   acodec: string | null;
   ext: "mp4" | "mkv";
+  risk: "high" | null;
 };
 
 export type GalleryItem = {

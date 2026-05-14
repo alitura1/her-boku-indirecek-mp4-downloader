@@ -78,9 +78,12 @@ export function buildMuxOptions(formats: UiFormat[]): MuxOption[] {
       filesize: totalSize,
       videoUrl: v.url,
       audioUrl: audio.url,
+      videoFormatId: v.id,
+      audioFormatId: audio.id,
       vcodec: v.vcodec,
       acodec: audio.acodec,
       ext,
+      risk: h >= 1080 ? "high" : null,
     });
   }
   return out;

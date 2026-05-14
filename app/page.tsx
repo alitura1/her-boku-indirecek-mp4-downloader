@@ -76,6 +76,9 @@ export default function Home() {
           audioUrl: opt.audioUrl,
           filename,
           container: opt.ext,
+          pageUrl: data.webpage_url,
+          videoFormatId: opt.videoFormatId,
+          audioFormatId: opt.audioFormatId,
         }),
       });
       if (!res.ok) {
@@ -341,7 +344,14 @@ export default function Home() {
                   <tbody>
                     {muxOptions.map((m) => (
                       <tr key={m.id} className="border-t border-white/5 hover:bg-white/[0.02]">
-                        <td className="py-2 pr-3 font-mono">{m.label}</td>
+                        <td className="py-2 pr-3 font-mono">
+                          {m.label}
+                          {m.risk === "high" && (
+                            <span className="ml-2 inline-block text-[10px] uppercase tracking-wide bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 rounded px-1.5 py-0.5">
+                              ⚠ büyük
+                            </span>
+                          )}
+                        </td>
                         <td className="py-2 pr-3 uppercase font-mono text-white/70">{m.ext}</td>
                         <td className="py-2 pr-3 font-mono text-xs text-white/50">
                           {[m.vcodec, m.acodec].filter((c) => c && c !== "none").join(" / ") || "—"}

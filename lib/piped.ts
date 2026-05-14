@@ -1,15 +1,38 @@
 import type { ExtractResult, UiFormat } from "./formats";
 
-const PIPED_INSTANCES = [
+const STATIC_PIPED_INSTANCES = [
+  "https://api.piped.private.coffee",
   "https://pipedapi.kavin.rocks",
   "https://api-piped.mha.fi",
-  "https://pipedapi.adminforge.de",
-  "https://pipedapi.tokhmi.xyz",
-  "https://piped-api.lunar.icu",
-  "https://pipedapi.reallyaweso.me",
 ];
 
 const INSTANCE_TIMEOUT_MS = 6000;
+const LIST_TIMEOUT_MS = 4000;
+const LIST_TTL_MS = 5 * 60 * 1000;
+
+let cachedList: { at: number; instances: string[] } | null = null;
+
+async function fetchLiveInstances(): Promise<string[]> {
+  const now = Date.now();
+  if (cachedList && now - cachedList.at < LIST_TTL_MS) return cachedList.instances;
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), LIST_TIMEOUT_MS);
+  try {
+    const res = await fetch("https://piped-instances.kavin.rocks/", { signal: ctl.signal });
+    if (!res.ok) throw new Error("list http " + res.status);
+    const json = (await res.json()) as Array<{ api_url?: string; uptime_24h?: number }>;
+    const urls = json
+      .filter((x) => x.api_url && (x.uptime_24h ?? 0) > 90)
+      .map((x) => x.api_url!.replace(/\/$/, ""));
+    if (urls.length === 0) throw new Error("empty list");
+    cachedList = { at: now, instances: urls };
+    return urls;
+  } catch {
+    return STATIC_PIPED_INSTANCES;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 export function extractYoutubeId(url: string): string | null {
   try {
@@ -107,7 +130,8 @@ export async function pipedExtract(
   webpageUrl: string
 ): Promise<{ result: ExtractResult; instance: string } | { error: string }> {
   const errors: string[] = [];
-  const order = [...PIPED_INSTANCES].sort(() => Math.random() - 0.5);
+  const live = await fetchLiveInstances();
+  const order = [...live].sort(() => Math.random() - 0.5).slice(0, 5);
   for (const base of order) {
     const data = await fetchInstance(base, videoId);
     if (!data) {

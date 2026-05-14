@@ -52,7 +52,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (e: any) {
-    const detail = String(e?.stderr ?? e?.message ?? e);
+    const detail =
+      [e?.stderr, e?.stdout, e?.shortMessage, e?.message, e?.code]
+        .filter(Boolean)
+        .map(String)
+        .join(" | ") || String(e);
     const isYoutube = /youtu/i.test(url);
     return NextResponse.json(
       {

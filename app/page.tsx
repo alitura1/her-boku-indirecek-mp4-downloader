@@ -8,8 +8,11 @@ type Tab = "video" | "video-only" | "audio";
 
 export default function Home() {
   const [url, setUrl] = useState("");
+  const [cookies, setCookies] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attempts, setAttempts] = useState<{ strategy: string; error: string }[]>([]);
+  const [hint, setHint] = useState<string | null>(null);
   const [data, setData] = useState<ExtractResult | null>(null);
   const [tab, setTab] = useState<Tab>("video");
 
@@ -18,16 +21,20 @@ export default function Home() {
     if (!url.trim()) return;
     setLoading(true);
     setError(null);
+    setAttempts([]);
+    setHint(null);
     setData(null);
     try {
       const res = await fetch("/api/extract", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ url: url.trim() }),
+        body: JSON.stringify({ url: url.trim(), cookies: cookies.trim() || undefined }),
       });
       const json = await res.json();
       if (!res.ok) {
         setError(json.error || "Bilinmeyen hata");
+        if (Array.isArray(json.attempts)) setAttempts(json.attempts);
+        if (json.hint) setHint(json.hint);
       } else {
         setData(json);
         if (!json.formats.some((f: UiFormat) => f.kind === "video")) {
@@ -77,22 +84,43 @@ export default function Home() {
         </button>
       </form>
 
+      <details className="mb-8 border border-white/10 rounded-lg bg-white/[0.02] open:bg-white/[0.03]">
+        <summary className="cursor-pointer px-4 py-3 text-sm text-white/70 select-none hover:text-white">
+          İleri ayarlar (YouTube bot kontrolüne takılıyorsa)
+        </summary>
+        <div className="px-4 pb-4 pt-1 space-y-2">
+          <textarea
+            value={cookies}
+            onChange={(e) => setCookies(e.target.value)}
+            placeholder="cookies.txt içeriği (Netscape format). Chrome/Firefox için 'Get cookies.txt LOCALLY' eklentisinden youtube.com cookies'ini export edip buraya yapıştır."
+            rows={4}
+            className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-xs font-mono outline-none focus:border-accent placeholder:text-white/30"
+          />
+          <p className="text-xs text-white/40">
+            Cookies sadece bu istek için kullanılır, sunucuda saklanmaz (tmp dosyaya yazılır ve istek sonunda silinir). Hesabını güvenmediğin ortamda kullanma.
+          </p>
+        </div>
+      </details>
+
       {error && (
         <div className="border border-red-500/40 bg-red-500/10 text-red-200 rounded-lg p-4 mb-6">
           <div className="font-semibold mb-1">Hata</div>
           <div className="text-sm">{error}</div>
-          <div className="text-xs text-white/50 mt-2">
-            YouTube hatası mı aldın? Vercel'in datacenter IP'leri YouTube tarafından bloklanıyor.{" "}
-            <a
-              className="underline text-accent"
-              href="https://github.com/alitura1/her-boku-indirecek-mp4-downloader#self-host"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Self-host rehberi
-            </a>
-            .
-          </div>
+          {hint && <div className="text-xs text-white/60 mt-2">{hint}</div>}
+          {attempts.length > 0 && (
+            <details className="mt-3">
+              <summary className="text-xs text-white/50 cursor-pointer select-none hover:text-white/70">
+                Denemeler ({attempts.length})
+              </summary>
+              <ul className="mt-2 space-y-1 text-xs font-mono text-white/50">
+                {attempts.map((a, i) => (
+                  <li key={i} className="break-all">
+                    <span className="text-accent/80">{a.strategy}</span>: {a.error}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
         </div>
       )}
 

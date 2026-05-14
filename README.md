@@ -19,9 +19,29 @@ Sunucu video byte'larını taşımaz. yt-dlp sadece kaynak CDN'in **direct URL**
 URL → /api/extract → yt-dlp --dump-json → format listesi → client direkt CDN'den indirir
 ```
 
-## Önemli uyarı: YouTube ve Vercel
+## YouTube ve Vercel
 
-YouTube, Vercel/AWS/GCP gibi datacenter IP'lerini agresif olarak bloklar — "Sign in to confirm you're not a bot" hatası verir. **YouTube indirmek istiyorsan self-host şart.** Diğer siteler (TikTok, X, Instagram, Reddit, Facebook, Vimeo...) Vercel'de büyük oranda çalışır.
+YouTube datacenter IP'lerini "bot" diye işaretler ve **bazı** videoları bloklar. Bu projede üç katmanlı bir bypass var:
+
+1. **yt-dlp player_client zinciri:** `android_vr → tv_embedded → ios → web_safari` sırayla denenir. Klasik public videoların büyük çoğunluğu bu adımda geçer.
+2. **Piped fallback:** Yukarıdaki zincir başarısız olursa public Piped instance'ları (community-hosted YouTube proxy'leri) rotasyonlu olarak denenir. Format URL'leri kısa ömürlüdür, hemen indir.
+3. **Kullanıcı cookies'i (garantili mod):** Hâlâ fail ederse UI'daki "İleri ayarlar" altına kendi YouTube cookies.txt'ini yapıştır. Bu durumda yt-dlp tam yetkili çalışır.
+
+### Cookies nasıl alınır
+
+1. Chrome/Firefox'a [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) eklentisini kur
+2. youtube.com'a giriş yap
+3. Eklentinin ikonuna tıkla → "Export" → Netscape format
+4. İçeriği site üzerindeki textarea'ya yapıştır
+
+### Cookies privacy
+
+- Cookies sadece tek bir API isteği için kullanılır.
+- Vercel'in `/tmp` dizinine yazılır, istek biter bitmez `unlink` ile silinir.
+- Sunucu loglarına yazılmaz, response'da echo edilmez.
+- Yine de **paylaşımlı ortamda kendi hesabını kullanma**: deploy senin ise sorun yok, ama başkasının deploy'una kendi cookies'ini yapıştırma.
+
+Diğer siteler (TikTok, X, Instagram, Reddit, Facebook, Vimeo...) Vercel'de cookies olmadan zaten çalışır.
 
 ## Local çalıştırma
 

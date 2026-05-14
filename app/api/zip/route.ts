@@ -1,6 +1,4 @@
 import { NextRequest } from "next/server";
-import * as archiverNs from "archiver";
-const archiver: (typeof archiverNs)["default"] = (archiverNs as any).default ?? (archiverNs as any);
 import { Readable } from "node:stream";
 
 export const runtime = "nodejs";
@@ -36,7 +34,8 @@ export async function POST(req: NextRequest) {
   }
   const zipName = sanitize(body.filename ?? "gallery.zip", "gallery.zip");
 
-  const archive = archiver("zip", { store: true });
+  const { ZipArchive } = await import("archiver");
+  const archive: any = new (ZipArchive as any)({ store: true });
   archive.on("warning", () => {});
   archive.on("error", () => {});
 
